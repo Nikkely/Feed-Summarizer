@@ -5,7 +5,8 @@ RUN apk add --no-cache \
     git \
     curl \
     sudo \
-    openssh
+    openssh \
+    make
 
 # Set up a non-root user
 ARG USERNAME=vscode
