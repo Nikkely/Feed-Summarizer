@@ -4,7 +4,8 @@ FROM golang:tip-alpine3.22
 RUN apk add --no-cache \
     git \
     curl \
-    sudo
+    sudo \
+    openssh
 
 # Set up a non-root user
 ARG USERNAME=vscode

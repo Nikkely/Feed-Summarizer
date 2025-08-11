@@ -1,7 +1,16 @@
 {
   "name": "Go Dev Container",
   "build": {
-    "dockerfile": "Dockerfile"
+    "dockerfile": "Dockerfile",
+    "args": {
+      "USERNAME": "${localEnv:USER}"
+    }
+  },
+  "mounts": [
+      "source=${localEnv:SSH_AUTH_SOCK},target=${localEnv:SSH_AUTH_SOCK},type=bind"
+  ],
+  "remoteEnv": {
+      "SSH_AUTH_SOCK": "${localEnv:SSH_AUTH_SOCK}"
   },
   "customizations": {
     "vscode": {
@@ -16,7 +25,7 @@
     }
   },
   "postCreateCommand": [
-    "go mod tidy"
+    // "go mod tidy"
   ],
-  "remoteUser": "vscode"
+  "remoteUser": "${localEnv:USER}"
 }
