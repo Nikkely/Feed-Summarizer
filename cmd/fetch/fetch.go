@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	rss "rss-summarizer/internal"
+	"rss-summarizer/internal/rss"
 )
 
 func main() {
