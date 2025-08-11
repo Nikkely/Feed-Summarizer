@@ -1,0 +1,22 @@
+{
+  "name": "Go Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "go.toolsManagement.autoUpdate": true,
+        "go.useLanguageServer": true
+      },
+      "extensions": [
+        "golang.go",
+        "ms-vscode.go"
+      ]
+    }
+  },
+  "postCreateCommand": [
+    "go mod tidy"
+  ],
+  "remoteUser": "vscode"
+}
