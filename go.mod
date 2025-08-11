@@ -1,3 +1,3 @@
-module rss-summaries
+module rss-summarizer
 
 go 1.26
