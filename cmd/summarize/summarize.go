@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"log"
 	sum "rss-summarizer/internal/summarize"
-	"strings"
 )
 
 func main() {
-	urlsArg := flag.String("urls", "https://example.com/feed", "rss feed url")
-	separatorArg := flag.String("sep", ",", "separator for multiple urls")
+	urlArg := flag.String("url", "https://example.com/feed", "rss feed url")
 	genApiKindArg := flag.String("gen-api-kind", "gemini", "kind of generative API to use")
 	flag.Parse()
 
@@ -22,7 +20,7 @@ func main() {
 		log.Fatal("Unsupported API")
 	}
 
-	summary, err := sum.Summarize(sumClient, strings.Split(*urlsArg, *separatorArg))
+	summary, err := sum.Summarize(sumClient, *urlArg)
 	if err != nil {
 		log.Fatal("Failed to summarize URLs:", err)
 	}
