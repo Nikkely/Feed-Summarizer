@@ -2,6 +2,7 @@ package prompt
 
 import (
 	"testing"
+	"text/template"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,24 +20,24 @@ var systemPrompt = `
 `
 var templateStr = "タイトル:{{.title}}, 本文:{{.body}}\n"
 
+func getTemplate(str string) *template.Template {
+	temp, err := template.New("info").Parse(str)
+	if err != nil {
+		panic("failed to parse user prompt template: " + err.Error())
+	}
+	return temp
+}
+
 func TestNewPromptBuilder(t *testing.T) {
 	systemPrompt := "System: "
 	validTemplateStr := "User: {{.Name}}\n"
-	builder, err := NewPromptBuilder(systemPrompt, validTemplateStr)
-	assert.NoError(t, err)
+	builder := NewPromptBuilder(systemPrompt, getTemplate(validTemplateStr))
 	assert.Equal(t, systemPrompt, builder.SystemPrompt)
 	assert.NotNil(t, builder.UserPromptTemplate)
 }
 
-func TestNewPromptBuilder_TemplateError(t *testing.T) {
-	invalidTemplateStr := "User: {{.Name"
-	_, err := NewPromptBuilder(systemPrompt, invalidTemplateStr)
-	assert.Error(t, err)
-}
-
 func TestPromptBuilder_Append(t *testing.T) {
-	builder, err := NewPromptBuilder(systemPrompt, templateStr)
-	assert.NoError(t, err)
+	builder := NewPromptBuilder(systemPrompt, getTemplate(templateStr))
 
 	builder.Append(map[string]string{"title": "title1", "body": "body1"}).Append(map[string]string{"title": "title2", "body": "body2"})
 
@@ -49,8 +50,7 @@ func TestPromptBuilder_Append(t *testing.T) {
 func TestPromptBuilder_Append_Error(t *testing.T) {
 	systemPrompt := "System: "
 	templateStr := "User: {{.Name}}\n"
-	builder, err := NewPromptBuilder(systemPrompt, templateStr)
-	assert.NoError(t, err)
+	builder := NewPromptBuilder(systemPrompt, getTemplate(templateStr))
 
 	// Pass invalid data type to trigger an error
 	invalidVars := 123 // Not a map or struct
@@ -59,8 +59,7 @@ func TestPromptBuilder_Append_Error(t *testing.T) {
 }
 
 func TestPromptBuilder_Build(t *testing.T) {
-	builder, err := NewPromptBuilder(systemPrompt, templateStr)
-	assert.NoError(t, err)
+	builder := NewPromptBuilder(systemPrompt, getTemplate(templateStr))
 
 	builder.Append(map[string]string{"title": "title1", "body": "body1"}).Append(map[string]string{"title": "title2", "body": "body2"})
 	expected := `

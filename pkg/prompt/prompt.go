@@ -2,7 +2,6 @@ package prompt
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 )
 
@@ -27,16 +26,11 @@ type PromptBuilder struct {
 // Returns:
 //   - *PromptBuilder: A pointer to the newly created PromptBuilder instance.
 //   - error: An error if the template parsing fails.
-func NewPromptBuilder(systemPrompt string, userPromptTemplate string) (*PromptBuilder, error) {
-	temp, err := template.New("info").Parse(userPromptTemplate)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse user prompt template: %w", err)
-	}
-
+func NewPromptBuilder(systemPrompt string, userPromptTemplate *template.Template) *PromptBuilder {
 	return &PromptBuilder{
 		SystemPrompt:       systemPrompt,
-		UserPromptTemplate: temp,
-	}, nil
+		UserPromptTemplate: userPromptTemplate,
+	}
 }
 
 // Append appends user input to the prompt using the specified template.

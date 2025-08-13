@@ -14,9 +14,6 @@ type RSSInfo struct {
 
 	// Link is the URL of the RSS feed item.
 	Link string `json:"link"`
-
-	// Page is the optional page content associated with the RSS feed item.
-	Page string `json:"page,omitempty"`
 }
 
 // FeedFetcher defines an interface for fetching RSS feeds.
