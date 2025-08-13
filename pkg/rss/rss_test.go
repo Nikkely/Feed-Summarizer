@@ -4,46 +4,42 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/mmcdole/gofeed"
+	"github.com/stretchr/testify/assert"
 )
 
 // MockFeedFetcher is a mock implementation of FeedFetcher for testing.
 type MockFeedFetcher struct {
-	Feed *gofeed.Feed
-	Err  error
+	Items []RSSInfo
+	Err   error
 }
 
-// Fetch returns the mock feed or an error.
-func (m *MockFeedFetcher) Fetch(feedUrl string) (*gofeed.Feed, error) {
-	return m.Feed, m.Err
+// Fetch returns the mock feed items or an error.
+func (m *MockFeedFetcher) Fetch(feedURL string) ([]RSSInfo, error) {
+	if m.Err != nil {
+		return nil, m.Err
+	}
+	return m.Items, nil
 }
 
-func TestFetchRss(t *testing.T) {
-	mockFeed := &gofeed.Feed{
-		Items: []*gofeed.Item{
-			{Title: "Item 1"},
-			{Title: "Item 2"},
-			{Title: "Item 3"},
+func TestFetchRSS(t *testing.T) {
+	mockFetcher := &MockFeedFetcher{
+		Items: []RSSInfo{
+			{Title: "Title 1", Link: "http://example.com/1"},
+			{Title: "Title 2", Link: "http://example.com/2"},
 		},
 	}
-	mockFetcher := &MockFeedFetcher{Feed: mockFeed}
 
-	result, err := fetchRss(mockFetcher, "https://example.com/feed")
-	if err != nil {
-		t.Fatalf("FetchRss returned an error: %v", err)
-	}
-
-	expected := `[{"title":"Item 1"},{"title":"Item 2"},{"title":"Item 3"}]`
-	if result != expected {
-		t.Errorf("FetchRss() = %v; want %v", result, expected)
-	}
+	result, err := fetchRSS(mockFetcher, "http://example.com/feed")
+	assert.NoError(t, err)
+	assert.Equal(t, mockFetcher.Items, result)
 }
 
-func TestFetchRss_FetchError(t *testing.T) {
-	mockFetcher := &MockFeedFetcher{Err: errors.New("failed to fetch")}
-
-	_, err := fetchRss(mockFetcher, "https://example.com/feed")
-	if err == nil {
-		t.Fatal("FetchRss() expected an error but got nil")
+func TestFetchRSS_Error(t *testing.T) {
+	mockFetcher := &MockFeedFetcher{
+		Err: errors.New("fetch error"),
 	}
+
+	_, err := fetchRSS(mockFetcher, "http://example.com/feed")
+	assert.Error(t, err)
+	assert.Equal(t, "failed to fetch RSS feed from URL http://example.com/feed: fetch error", err.Error())
 }

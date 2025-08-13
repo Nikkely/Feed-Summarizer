@@ -11,7 +11,7 @@ func main() {
 	feedUrl := flag.String("url", "https://example.com/feed", "rss feed url")
 	flag.Parse()
 
-	feedItems, err := rss.FetchRss(*feedUrl)
+	feedItems, err := rss.FetchRSStoJSONString(*feedUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
