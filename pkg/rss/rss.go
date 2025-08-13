@@ -7,13 +7,16 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-// RSSInfo represents the title and link of an RSS feed item.
+// RSSInfo represents the title, link, and optional page content of an RSS feed item.
 type RSSInfo struct {
 	// Title is the title of the RSS feed item.
 	Title string `json:"title"`
 
 	// Link is the URL of the RSS feed item.
 	Link string `json:"link"`
+
+	// Page is the optional page content associated with the RSS feed item.
+	Page string `json:"page,omitempty"`
 }
 
 // FeedFetcher defines an interface for fetching RSS feeds.
@@ -34,6 +37,7 @@ type GoFeedFetcher struct{}
 // Fetch fetches the RSS feed using gofeed.
 // Parameters:
 //   - feedURL: A string representing the URL of the RSS feed.
+//
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the fetched feed items.
 //   - error: An error if the fetch operation fails.
@@ -50,6 +54,7 @@ func (g *GoFeedFetcher) Fetch(feedURL string) ([]RSSInfo, error) {
 // translate converts a gofeed.Feed into a slice of RSSInfo.
 // Parameters:
 //   - feed: A pointer to a gofeed.Feed object.
+//
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the feed items.
 //   - error: An error if the feed is nil.
@@ -72,6 +77,7 @@ func (g *GoFeedFetcher) translate(feed *gofeed.Feed) ([]RSSInfo, error) {
 // Parameters:
 //   - fetcher: An implementation of the FeedFetcher interface.
 //   - feedURL: A string representing the URL of the RSS feed.
+//
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the fetched feed items.
 //   - error: An error if the fetch operation fails.
@@ -86,6 +92,7 @@ func fetchRSS(fetcher FeedFetcher, feedURL string) ([]RSSInfo, error) {
 // FetchRSStoJSONString fetches RSS feed items and returns them as a JSON string.
 // Parameters:
 //   - feedURL: A string representing the URL of the RSS feed.
+//
 // Returns:
 //   - string: A JSON string containing the fetched feed items.
 //   - error: An error if the fetch or JSON marshaling operation fails.
@@ -106,6 +113,7 @@ func FetchRSStoJSONString(feedURL string) (string, error) {
 // FetchRSS fetches RSS feed items and returns them as a slice of RSSInfo.
 // Parameters:
 //   - feedURL: A string representing the URL of the RSS feed.
+//
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the fetched feed items.
 //   - error: An error if the fetch operation fails.

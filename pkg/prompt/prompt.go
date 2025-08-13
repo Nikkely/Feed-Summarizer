@@ -1,15 +1,19 @@
 package prompt
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"text/template"
+)
 
 // PromptBuilder is a utility for constructing prompts for summarization.
-// It allows appending user input to a system-defined prompt format.
+// It allows appending user input to a system-defined prompt format using templates.
 type PromptBuilder struct {
 	// SystemPrompt is the base prompt provided by the system.
 	SystemPrompt string
 
-	// UserPromptFmt is the format string for user prompts, compatible with fmt.Printf.
-	UserPromptFmt string
+	// UserPromptTemplate is the template for user prompts.
+	UserPromptTemplate *template.Template
 
 	// userPrompt stores the accumulated user input.
 	userPrompt string
@@ -18,29 +22,36 @@ type PromptBuilder struct {
 // NewPromptBuilder creates a new instance of PromptBuilder.
 // Parameters:
 //   - systemPrompt: A string representing the base system prompt.
-//   - userPromptFmt: A string representing the format for user prompts.
+//   - userPromptTemplate: A string representing the template for user prompts.
 //
 // Returns:
 //   - *PromptBuilder: A pointer to the newly created PromptBuilder instance.
-func NewPromptBuilder(systemPrompt string, userPromptFmt string) *PromptBuilder {
-	return &PromptBuilder{
-		SystemPrompt:  systemPrompt,
-		UserPromptFmt: userPromptFmt,
+//   - error: An error if the template parsing fails.
+func NewPromptBuilder(systemPrompt string, userPromptTemplate string) (*PromptBuilder, error) {
+	temp, err := template.New("info").Parse(userPromptTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse user prompt template: %w", err)
 	}
+
+	return &PromptBuilder{
+		SystemPrompt:       systemPrompt,
+		UserPromptTemplate: temp,
+	}, nil
 }
 
-// Append appends user input to the prompt using the specified format.
+// Append appends user input to the prompt using the specified template.
 // Parameters:
-//   - text: A variadic slice of strings representing the user input to append.
+//   - vars: A map or struct containing keys and values to populate the template.
 //
 // Returns:
-//   - *PromptBuilder: The updated PromptBuilder instance.
-func (p *PromptBuilder) Append(text ...string) *PromptBuilder {
-	args := make([]any, len(text))
-	for i, v := range text {
-		args[i] = v
+//   - *PromptBuilder: The updated PromptBuilder instance, or nil if an error occurs.
+func (p *PromptBuilder) Append(vars any) *PromptBuilder {
+	var buf bytes.Buffer
+	if err := p.UserPromptTemplate.Execute(&buf, vars); err != nil {
+		return nil
 	}
-	p.userPrompt += fmt.Sprintf(p.UserPromptFmt, args...)
+	p.userPrompt += buf.String()
+
 	return p
 }
 

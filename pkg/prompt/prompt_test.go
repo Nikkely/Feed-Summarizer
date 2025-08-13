@@ -2,6 +2,8 @@ package prompt
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var systemPrompt = `
@@ -15,38 +17,52 @@ var systemPrompt = `
 
 では、以下のRSS情報を基にニュース記事を作成してください。
 `
-var userPromptFmt = "タイトル:%s, 本文:%s\n"
+var templateStr = "タイトル:{{.title}}, 本文:{{.body}}\n"
 
 func TestNewPromptBuilder(t *testing.T) {
-	builder := NewPromptBuilder(systemPrompt, userPromptFmt)
+	systemPrompt := "System: "
+	validTemplateStr := "User: {{.Name}}\n"
+	builder, err := NewPromptBuilder(systemPrompt, validTemplateStr)
+	assert.NoError(t, err)
+	assert.Equal(t, systemPrompt, builder.SystemPrompt)
+	assert.NotNil(t, builder.UserPromptTemplate)
+}
 
-	if builder.SystemPrompt != systemPrompt {
-		t.Errorf("expected SystemPrompt to be %q, got %q", systemPrompt, builder.SystemPrompt)
-	}
-
-	if builder.UserPromptFmt != userPromptFmt {
-		t.Errorf("expected UserPromptFmt to be %q, got %q", userPromptFmt, builder.UserPromptFmt)
-	}
+func TestNewPromptBuilder_TemplateError(t *testing.T) {
+	invalidTemplateStr := "User: {{.Name"
+	_, err := NewPromptBuilder(systemPrompt, invalidTemplateStr)
+	assert.Error(t, err)
 }
 
 func TestPromptBuilder_Append(t *testing.T) {
-	builder := NewPromptBuilder(systemPrompt, userPromptFmt)
-	builder.Append("title1", "body1")
-	builder.Append("title2", "body2")
+	builder, err := NewPromptBuilder(systemPrompt, templateStr)
+	assert.NoError(t, err)
+
+	builder.Append(map[string]string{"title": "title1", "body": "body1"}).Append(map[string]string{"title": "title2", "body": "body2"})
 
 	expected := `タイトル:title1, 本文:body1
 タイトル:title2, 本文:body2
 `
-	if builder.userPrompt != expected {
-		t.Errorf("expected userPrompt to be %q, got %q", expected, builder.userPrompt)
-	}
+	assert.Equal(t, expected, builder.userPrompt)
+}
+
+func TestPromptBuilder_Append_Error(t *testing.T) {
+	systemPrompt := "System: "
+	templateStr := "User: {{.Name}}\n"
+	builder, err := NewPromptBuilder(systemPrompt, templateStr)
+	assert.NoError(t, err)
+
+	// Pass invalid data type to trigger an error
+	invalidVars := 123 // Not a map or struct
+	result := builder.Append(invalidVars)
+	assert.Nil(t, result)
 }
 
 func TestPromptBuilder_Build(t *testing.T) {
-	builder := NewPromptBuilder(systemPrompt, userPromptFmt)
-	builder.Append("title1", "body1")
-	builder.Append("title2", "body2")
+	builder, err := NewPromptBuilder(systemPrompt, templateStr)
+	assert.NoError(t, err)
 
+	builder.Append(map[string]string{"title": "title1", "body": "body1"}).Append(map[string]string{"title": "title2", "body": "body2"})
 	expected := `
 あなたは優秀なニュース記者です。以下に示すRSSの更新情報を元に、わかりやすく、かつ簡潔にニュース記事を作成してください。
 
@@ -60,7 +76,6 @@ func TestPromptBuilder_Build(t *testing.T) {
 タイトル:title1, 本文:body1
 タイトル:title2, 本文:body2
 `
-	if builder.Build() != expected {
-		t.Errorf("expected userPrompt to be %q, got %q", expected, builder.Build())
-	}
+	result := builder.Build()
+	assert.Equal(t, expected, result)
 }
