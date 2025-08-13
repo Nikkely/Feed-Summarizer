@@ -1,6 +1,6 @@
 module rss-summarizer
 
-go 1.26
+go 1.25
 
 require (
 	github.com/mmcdole/gofeed v1.3.0
