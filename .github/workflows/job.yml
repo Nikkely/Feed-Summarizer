@@ -15,7 +15,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.26'
 
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v6
@@ -27,7 +27,8 @@ jobs:
 
       - name: Run Tests with Coverage
         run: |
-          make -f scripts/Makefile
+          make -f scripts/Makefile test
+          make -f scripts/Makefile cover
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
