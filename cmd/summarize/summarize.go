@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	var unusedVar = 42 // unused: "unusedVar" is unused
 	urlArg := flag.String("url", "https://example.com/feed", "rss feed url")
 	genApiKindArg := flag.String("gen-api-kind", "gemini", "kind of generative API to use")
 	flag.Parse()
