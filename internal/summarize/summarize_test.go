@@ -2,6 +2,7 @@ package summarize
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -62,14 +63,14 @@ func TestNewRSSInfo(t *testing.T) {
 
 func TestSummarize_Updated(t *testing.T) {
 	mockClient := &MockGenAIClient{}
-	mockFeedFetcher := func(url string) (*gofeed.Feed, error) {
+	mockFeedFetcher := func(_ string) (*gofeed.Feed, error) {
 		return &gofeed.Feed{
 			Items: []*gofeed.Item{
 				{Title: "Test Item", Link: "http://example.com/test"},
 			},
 		}, nil
 	}
-	mockPageFetcher := func(url string) (string, error) {
+	mockPageFetcher := func(_ string) (string, error) {
 		return "<html>Test Page</html>", nil
 	}
 
@@ -79,9 +80,9 @@ func TestSummarize_Updated(t *testing.T) {
 }
 
 func TestFetchFeed(t *testing.T) {
-	handler := func(w http.ResponseWriter, r *http.Request) {
+	handler := func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`<?xml version="1.0" encoding="UTF-8" ?>
+		if _, err := w.Write([]byte(`<?xml version="1.0" encoding="UTF-8" ?>
 			<rss version="2.0">
 				<channel>
 					<title>Test Feed</title>
@@ -90,7 +91,9 @@ func TestFetchFeed(t *testing.T) {
 						<link>http://example.com/test</link>
 					</item>
 				</channel>
-			</rss>`))
+			</rss>`)); err != nil {
+			log.Fatalf("Error writing response: %v", err)
+		}
 	}
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 	defer ts.Close()

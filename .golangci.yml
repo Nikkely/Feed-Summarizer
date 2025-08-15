@@ -15,9 +15,6 @@ linters:
     - gosimple
     - misspell
   disable:
-    # 無効化したいものはここに追加
-    # - errcheck
-    # - gocyclo
 
 linters-settings:
   gofmt:
