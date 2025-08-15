@@ -1,4 +1,4 @@
-package summarize
+package ai_client
 
 import (
 	"context"

@@ -3,8 +3,11 @@ package summarize
 import (
 	"errors"
 	"fmt"
+	"os"
 	"text/template"
 
+	genAi "rss-summarizer/internal/ai_client"
+	"rss-summarizer/internal/fetcher"
 	"rss-summarizer/pkg/prompt"
 
 	"github.com/mmcdole/gofeed"
@@ -31,7 +34,7 @@ type RSSInfo struct {
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the title, link, and optional page content.
 //   - error: An error if any of the URLs cannot be processed.
-func NewRSSInfo(feed *gofeed.Feed, pageFetcher HTMLPageFetcher) (infos []RSSInfo, err error) {
+func NewRSSInfo(feed *gofeed.Feed, pageFetcher fetcher.HTMLPageFetcher) (infos []RSSInfo, err error) {
 	for _, item := range feed.Items {
 		page, htmlErr := pageFetcher(item.Link) // TODO: マルチスレッド実行可能に
 		if htmlErr != nil {
@@ -51,40 +54,94 @@ func NewRSSInfo(feed *gofeed.Feed, pageFetcher HTMLPageFetcher) (infos []RSSInfo
 	return infos, err
 }
 
-// Summarize generates a summary for the content of the given URLs using a GenAIClient.
+// Summarizer is responsible for summarizing RSS feed content using a GenAIClient.
+// It fetches RSS feeds, retrieves HTML content, and generates summaries based on prompts.
+type Summarizer struct {
+	client        genAi.GenAIClient
+	feedFetcher   fetcher.FeedFetcher
+	pageFetcher   fetcher.HTMLPageFetcher
+	promptBuilder *prompt.PromptBuilder
+}
+
+// NewSummarizer initializes a new Summarizer instance.
 // Parameters:
-//   - client: An instance of GenAIClient to handle the summarization.
+//   - client: An instance of GenAIClient for generating summaries.
+//   - feedFetcher: A function to fetch RSS feeds.
+//   - pageFetcher: A function to fetch HTML content of URLs.
+//
+// Returns:
+//   - *Summarizer: A new Summarizer instance.
+func NewSummarizer(client genAi.GenAIClient, feedFetcher fetcher.FeedFetcher, pageFetcher fetcher.HTMLPageFetcher) *Summarizer {
+	return &Summarizer{
+		client:      client,
+		feedFetcher: feedFetcher,
+		pageFetcher: pageFetcher,
+	}
+}
+
+// txtFileLoader reads the content of a text file and returns it as a string.
+// Parameters:
+//   - filePath: A string representing the path to the text file.
+//
+// Returns:
+//   - string: The content of the file as a string.
+//   - error: An error if the file cannot be read.
+func txtFileLoader(filePath string) (string, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+	return string(content), nil
+}
+
+// LoadPromptBuilder initializes the prompt builder with system and user prompts.
+// Parameters:
+//   - sysPromptTxtPath: Path to the system prompt text file.
+//   - usrPromptTmplPath: Path to the user prompt template file.
+//
+// Returns:
+//   - error: An error if loading or parsing the files fails.
+func (s *Summarizer) LoadPromptBuilder(sysPromptTxtPath string, usrPromptTmplPath string) error {
+	sysPrompt, err := txtFileLoader(sysPromptTxtPath)
+	if err != nil {
+		return err
+	}
+
+	usrPromptTmpl, err := template.ParseFiles(usrPromptTmplPath)
+	if err != nil {
+		return fmt.Errorf("failed to read template %s: %w", usrPromptTmplPath, err)
+	}
+
+	s.promptBuilder = prompt.NewPromptBuilder(sysPrompt, usrPromptTmpl)
+	return nil
+}
+
+// Summarize generates a summary for the content of the given RSS feed URL.
+// Parameters:
 //   - feedURL: A string representing the URL of the RSS feed.
 //
 // Returns:
 //   - string: The generated summary.
 //   - error: An error if any of the URLs cannot be processed or summarization fails.
-func Summarize(client GenAIClient, feedFetcher FeedFetcher, pageFetcher HTMLPageFetcher, feedURL string) (string, error) {
+func (s *Summarizer) Summarize(feedURL string) (string, error) {
 	var err error
-	feed, err := feedFetcher(feedURL)
+	if s.promptBuilder == nil {
+		return "", fmt.Errorf("prompt builder is not initialized")
+	}
+
+	feed, err := s.feedFetcher(feedURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch RSS feed: %w", err)
 	}
 
-	infos, err := NewRSSInfo(feed, pageFetcher)
+	infos, err := NewRSSInfo(feed, s.pageFetcher)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch HTML for some URLs: %w", err)
 	}
 
-	temp, err := template.New("info").Parse(`
-概要：{{.Title}}, URL:{{.Link}} 
-{{ with .Page }}
-  {{ . }}
-{{ end }}
-	`)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse user prompt template: %w", err)
-	}
-
-	promptBuilder := prompt.NewPromptBuilder(`次のページを要約してください`, temp)
 	for _, info := range infos {
-		promptBuilder.Append(info)
+		s.promptBuilder.Append(info)
 	}
 
-	return client.Send(promptBuilder.Build())
+	return s.client.Send(s.promptBuilder.Build())
 }

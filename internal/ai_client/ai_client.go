@@ -1,4 +1,4 @@
-package summarize
+package ai_client
 
 // Client defines an interface for summarization clients.
 type GenAIClient interface {

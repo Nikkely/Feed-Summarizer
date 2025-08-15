@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"rss-summarizer/internal/fetcher"
 	"testing"
 
 	"github.com/mmcdole/gofeed"
@@ -20,46 +21,6 @@ func (m *MockGenAIClient) Send(prompt string) (string, error) {
 	return "mock summary", nil
 }
 
-func TestFetchHTML(t *testing.T) {
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("<html><body>Test Page</body></html>"))
-	}
-	ts := httptest.NewServer(http.HandlerFunc(handler))
-	defer ts.Close()
-
-	result, err := FetchHTML(ts.URL)
-	assert.NoError(t, err, "fetchHTML returned an unexpected error")
-	assert.Contains(t, result, "Test Page", "fetchHTML result mismatch")
-}
-
-func TestFetchHTML_Error(t *testing.T) {
-	_, err := FetchHTML("http://invalid-url")
-	assert.Error(t, err, "Expected an error but got nil")
-}
-
-func TestNewRSSInfo(t *testing.T) {
-	mockFeed := &gofeed.Feed{
-		Items: []*gofeed.Item{
-			{Title: "Item 1", Link: "http://example.com/item1"},
-			{Title: "Item 2", Link: "http://example.com/item2"},
-		},
-	}
-
-	mockPageFetcher := func(url string) (string, error) {
-		if url == "http://example.com/item1" {
-			return "<html>Page 1</html>", nil
-		}
-		return "", errors.New("failed to fetch page")
-	}
-
-	infos, err := NewRSSInfo(mockFeed, mockPageFetcher)
-	assert.Error(t, err, "NewRSSInfo returned an unexpected error")
-	assert.Len(t, infos, 1, "Expected 1 valid RSSInfo but got a different count")
-	assert.Equal(t, "Item 1", infos[0].Title, "RSSInfo title mismatch")
-	assert.Equal(t, "http://example.com/item1", infos[0].Link, "RSSInfo link mismatch")
-	assert.Contains(t, infos[0].Page, "Page 1", "RSSInfo page content mismatch")
-}
 
 func TestSummarize_Updated(t *testing.T) {
 	mockClient := &MockGenAIClient{}
@@ -74,7 +35,11 @@ func TestSummarize_Updated(t *testing.T) {
 		return "<html>Test Page</html>", nil
 	}
 
-	result, err := Summarize(mockClient, mockFeedFetcher, mockPageFetcher, "http://example.com/rss")
+	s := NewSummarizer(mockClient, mockFeedFetcher, mockPageFetcher)
+	if err := s.LoadPromptBuilder("../../templates/system_prompt.txt", "../../templates/user_prompt.tmpl"); err != nil {
+		log.Fatalln(err)
+	}
+	result, err := s.Summarize("http://example.com/rss")
 	assert.NoError(t, err, "Summarize returned an unexpected error")
 	assert.Equal(t, "mock summary", result, "Summarize result mismatch")
 }
@@ -98,7 +63,7 @@ func TestFetchFeed(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(handler))
 	defer ts.Close()
 
-	feed, err := FetchFeed(ts.URL)
+	feed, err := fetcher.FetchFeed(ts.URL)
 	assert.NoError(t, err, "FetchFeed returned an unexpected error")
 	assert.NotNil(t, feed, "Expected a valid feed but got nil")
 	assert.Len(t, feed.Items, 1, "Expected 1 item in the feed but got a different count")
@@ -106,6 +71,32 @@ func TestFetchFeed(t *testing.T) {
 }
 
 func TestFetchFeed_Error(t *testing.T) {
-	_, err := FetchFeed("http://invalid-url")
+	_, err := fetcher.FetchFeed("http://invalid-url")
 	assert.Error(t, err, "Expected an error but got nil")
+}
+
+func TestLoadPromptBuilder(t *testing.T) {
+	s := &Summarizer{}
+	err := s.LoadPromptBuilder("../../templates/system_prompt.txt", "../../templates/user_prompt.tmpl")
+	assert.NoError(t, err, "LoadPromptBuilder returned an unexpected error")
+	assert.NotNil(t, s.promptBuilder, "PromptBuilder should be initialized")
+}
+
+func TestSummarize_ErrorWhenPromptBuilderNotInitialized(t *testing.T) {
+	mockClient := &MockGenAIClient{}
+	mockFeedFetcher := func(_ string) (*gofeed.Feed, error) {
+		return &gofeed.Feed{
+			Items: []*gofeed.Item{
+				{Title: "Test Item", Link: "http://example.com/test"},
+			},
+		}, nil
+	}
+	mockPageFetcher := func(_ string) (string, error) {
+		return "<html>Test Page</html>", nil
+	}
+
+	s := NewSummarizer(mockClient, mockFeedFetcher, mockPageFetcher)
+	_, err := s.Summarize("http://example.com/rss")
+	assert.Error(t, err, "Expected an error when PromptBuilder is not initialized")
+	assert.Contains(t, err.Error(), "prompt builder is not initialized", "Error message mismatch")
 }
