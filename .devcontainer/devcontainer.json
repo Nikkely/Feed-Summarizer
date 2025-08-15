@@ -20,7 +20,9 @@
       },
       "extensions": [
         "golang.go",
-        "ms-vscode.go"
+        "ms-vscode.go",
+        "github.copilot",
+        "github.copilot-chat"
       ]
     }
   },

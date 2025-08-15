@@ -3,8 +3,6 @@ package summarize
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"text/template"
 
 	"rss-summarizer/pkg/prompt"
@@ -33,7 +31,7 @@ type RSSInfo struct {
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the title, link, and optional page content.
 //   - error: An error if any of the URLs cannot be processed.
-func NewRSSInfo(feed *gofeed.Feed, pageFetcher func(string) (string, error)) (infos []RSSInfo, err error) {
+func NewRSSInfo(feed *gofeed.Feed, pageFetcher HTMLPageFetcher) (infos []RSSInfo, err error) {
 	for _, item := range feed.Items {
 		page, htmlErr := pageFetcher(item.Link) // TODO: マルチスレッド実行可能に
 		if htmlErr != nil {
@@ -53,32 +51,6 @@ func NewRSSInfo(feed *gofeed.Feed, pageFetcher func(string) (string, error)) (in
 	return infos, err
 }
 
-// fetchHTML retrieves the HTML content of the given URL as a string.
-// Parameters:
-//   - url: A string representing the target URL.
-//
-// Returns:
-//   - string: The HTML content of the page.
-//   - error: An error if the request or reading the response fails.
-func fetchHTML(url string) (string, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to fetch URL: %s, status code: %d", url, resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	return string(body), nil
-}
-
 // Summarize generates a summary for the content of the given URLs using a GenAIClient.
 // Parameters:
 //   - client: An instance of GenAIClient to handle the summarization.
@@ -87,26 +59,14 @@ func fetchHTML(url string) (string, error) {
 // Returns:
 //   - string: The generated summary.
 //   - error: An error if any of the URLs cannot be processed or summarization fails.
-//
-// Example:
-//
-//	client := NewGenAIClient()
-//	summary, err := Summarize(client, "https://example.com/rss")
-//	if err != nil {
-//	    log.Fatal(err)
-//	}
-//	fmt.Println(summary)
-func Summarize(client GenAIClient, feedURL string) (string, error) {
+func Summarize(client GenAIClient, feedFetcher FeedFetcher, pageFetcher HTMLPageFetcher, feedURL string) (string, error) {
 	var err error
-	fp := gofeed.NewParser()
-
-	feed, err := fp.ParseURL(feedURL)
+	feed, err := feedFetcher(feedURL)
 	if err != nil {
-		// TODO: 処理を止めずにエラーログを出力する
-		return "", fmt.Errorf("failed to fetch RSS feed from URL %s: %w", feedURL, err)
+		return "", fmt.Errorf("failed to fetch RSS feed: %w", err)
 	}
 
-	infos, err := NewRSSInfo(feed, fetchHTML)
+	infos, err := NewRSSInfo(feed, pageFetcher)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch HTML for some URLs: %w", err)
 	}

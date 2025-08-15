@@ -20,7 +20,7 @@ func main() {
 		log.Fatal("Unsupported API")
 	}
 
-	summary, err := sum.Summarize(sumClient, *urlArg)
+	summary, err := sum.Summarize(sumClient, sum.FetchFeed, sum.FetchHTML, *urlArg)
 	if err != nil {
 		log.Fatal("Failed to summarize URLs:", err)
 	}

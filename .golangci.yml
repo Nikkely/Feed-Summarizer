@@ -1,0 +1,43 @@
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - gofmt
+    - goimports
+    - gocritic
+    - revive
+    - unused
+    - ineffassign
+    - gosimple
+    - misspell
+  disable:
+
+linters-settings:
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: RSS-Summaries
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+  misspell:
+    locale: US
+
+issues:
+  exclude-use-default: false
+  max-same-issues: 50
+  max-issues-per-linter: 0
+  exclude-rules:
+    - linters:
+        - staticcheck
+      text: "SA1019" # Deprecated警告を一時的に除外したい場合
+
+output:
+  formats:
+    - format: line-number
