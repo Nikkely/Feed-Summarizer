@@ -1,37 +1,11 @@
-name: Lint and Security Checks
+name: Pull Request Workflow
 
 on:
   pull_request:
     branches: [ main ]
 
 jobs:
-  build_and_cache:
-    runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache.outputs.cache-key }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-
-      - name: Cache Go modules
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-mod-${{ hashFiles('**/go.sum') }}
-          restore-keys: go-mod-
-
-      - name: Build to populate cache
-        run: go build ./...
-
   reviewdog:
-    needs: build_and_cache
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,14 +14,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-
-      - name: Restore Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-mod-${{ hashFiles('**/go.sum') }}
 
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
@@ -78,7 +44,6 @@ jobs:
 
 
   unit_test:
-    needs: build_and_cache
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -88,13 +53,5 @@ jobs:
         with:
           go-version: '1.25'
 
-      - name: Restore Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-mod-${{ hashFiles('**/go.sum') }}
-
-      - name: Run Tests
-        run: make -f scripts/Makefile test
+      - name: Run Unit Tests
+        run: make -f scripts/Makefile unit_test

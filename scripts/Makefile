@@ -2,7 +2,7 @@
 COVERPKGS := $(shell go list ./... | grep -v '/cmd')
 
 # デフォルトターゲット（単純なテスト）
-test:
+unit_test:
 	go test $(COVERPKGS)
 
 # カバレッジ出力（テキスト + HTML）
