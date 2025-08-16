@@ -1,3 +1,7 @@
+// Package fetcher provides functionality for fetching and processing external resources.
+// It includes methods for fetching RSS feeds and HTML pages, such as FeedFetcher and HTMLPageFetcher.
+// The package is designed with dependency injection in mind, enabling easier testing of components
+// that rely on external data fetching.
 package fetcher
 
 import (

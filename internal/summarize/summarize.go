@@ -101,7 +101,7 @@ func txtFileLoader(filePath string) (string, error) {
 //
 // Returns:
 //   - error: An error if loading or parsing the files fails.
-func (s *Summarizer) LoadPromptBuilder(sysPromptTxtPath string, usrPromptTmplPath string) error {
+func (s *Summarizer) LoadPromptBuilder(sysPromptTxtPath, usrPromptTmplPath string) error {
 	sysPrompt, err := txtFileLoader(sysPromptTxtPath)
 	if err != nil {
 		return err

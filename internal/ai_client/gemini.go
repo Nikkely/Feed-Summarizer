@@ -1,4 +1,4 @@
-package ai_client
+package aiclient
 
 import (
 	"context"
