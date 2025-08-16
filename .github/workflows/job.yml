@@ -19,12 +19,6 @@ jobs:
         run: |
           make -f scripts/Makefile cover
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.html
-
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
@@ -35,7 +29,7 @@ jobs:
           echo "coverage.html deployed to GitHub Pages"
 
       - name: Upload to GitHub Pages
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
