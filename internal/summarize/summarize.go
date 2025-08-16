@@ -1,13 +1,10 @@
 package summarize
 
 import (
-	"context"
-	"errors"
 	"fmt"
+	"log"
 	"os"
-	"sync"
 	"text/template"
-	"time"
 
 	genAi "rss-summarizer/internal/ai_client"
 	"rss-summarizer/internal/fetcher"
@@ -30,57 +27,30 @@ type RSSInfo struct {
 }
 
 // NewRSSInfo creates a slice of RSSInfo from a gofeed.Feed.
+// It fetches HTML content for each feed item using the provided pageFetcher.
+// If an error occurs while fetching a page, it logs the error and continues processing other items.
 // Parameters:
 //   - feed: A pointer to a gofeed.Feed object containing RSS feed data.
 //   - pageFetcher: A function that fetches the HTML content of a given URL.
 //
 // Returns:
 //   - []RSSInfo: A slice of RSSInfo containing the title, link, and optional page content.
-//   - error: An error if any of the URLs cannot be processed.
+//   - error: An aggregated error if any of the URLs cannot be processed.
 func NewRSSInfo(feed *gofeed.Feed, pageFetcher fetcher.HTMLPageFetcher) (infos []RSSInfo, err error) {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-
-	semaphore := make(chan struct{}, 10) // Limit to 10 concurrent threads
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	urls := make([]string, 0, len(feed.Items))
+	for _, item := range feed.Items {
+		urls = append(urls, item.Link)
+	}
+	pages, err := fetcher.FetchHTMLPages(urls, pageFetcher)
 
 	for _, item := range feed.Items {
-		wg.Add(1)
-		semaphore <- struct{}{} // Acquire a slot
-
-		go func(item *gofeed.Item) {
-			defer wg.Done()
-			defer func() { <-semaphore }() // Release the slot
-
-			select {
-			case <-ctx.Done():
-				mu.Lock()
-				err = errors.Join(err, fmt.Errorf("timeout fetching URL: %s", item.Link))
-				mu.Unlock()
-				return
-			default:
-				page, htmlErr := pageFetcher(item.Link)
-				mu.Lock()
-				if htmlErr != nil {
-					err = errors.Join(err, htmlErr)
-				}
-				infos = append(infos, RSSInfo{
-					Title: item.Title,
-					Link:  item.Link,
-					Page:  page,
-				})
-				mu.Unlock()
-			}
-		}(item)
+		page := pages[item.Link]
+		infos = append(infos, RSSInfo{
+			Title: item.Title,
+			Link:  item.Link,
+			Page:  page, // This value will be nil if the retrieval fails.
+		})
 	}
-
-	wg.Wait()
-
-	if err != nil {
-		err = fmt.Errorf("failed to fetch HTML for some URLs: %w", err)
-	}
-
 	return infos, err
 }
 
@@ -147,12 +117,13 @@ func (s *Summarizer) LoadPromptBuilder(sysPromptTxtPath, usrPromptTmplPath strin
 }
 
 // Summarize generates a summary for the content of the given RSS feed URL.
+// It continues processing even if some HTML pages fail to fetch, logging the errors.
 // Parameters:
 //   - feedURL: A string representing the URL of the RSS feed.
 //
 // Returns:
 //   - string: The generated summary.
-//   - error: An error if any of the URLs cannot be processed or summarization fails.
+//   - error: An error if the summarization process fails entirely.
 func (s *Summarizer) Summarize(feedURL string) (string, error) {
 	var err error
 	if s.promptBuilder == nil {
@@ -166,7 +137,7 @@ func (s *Summarizer) Summarize(feedURL string) (string, error) {
 
 	infos, err := NewRSSInfo(feed, s.pageFetcher)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch HTML for some URLs: %w", err)
+		log.Printf("failed to fetch HTML for some URLs: %v", err) // Continue if page retrieval fails
 	}
 
 	for _, info := range infos {
