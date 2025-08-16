@@ -1,10 +1,13 @@
 package summarize
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"text/template"
+	"time"
 
 	genAi "rss-summarizer/internal/ai_client"
 	"rss-summarizer/internal/fetcher"
@@ -35,22 +38,49 @@ type RSSInfo struct {
 //   - []RSSInfo: A slice of RSSInfo containing the title, link, and optional page content.
 //   - error: An error if any of the URLs cannot be processed.
 func NewRSSInfo(feed *gofeed.Feed, pageFetcher fetcher.HTMLPageFetcher) (infos []RSSInfo, err error) {
-	for _, item := range feed.Items {
-		page, htmlErr := pageFetcher(item.Link) // TODO: マルチスレッド実行可能に
-		if htmlErr != nil {
-			err = errors.Join(err, htmlErr)
-			continue
-		}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
 
-		infos = append(infos, RSSInfo{
-			Title: item.Title,
-			Link:  item.Link,
-			Page:  page,
-		})
+	semaphore := make(chan struct{}, 10) // Limit to 10 concurrent threads
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	for _, item := range feed.Items {
+		wg.Add(1)
+		semaphore <- struct{}{} // Acquire a slot
+
+		go func(item *gofeed.Item) {
+			defer wg.Done()
+			defer func() { <-semaphore }() // Release the slot
+
+			select {
+			case <-ctx.Done():
+				mu.Lock()
+				err = errors.Join(err, fmt.Errorf("timeout fetching URL: %s", item.Link))
+				mu.Unlock()
+				return
+			default:
+				page, htmlErr := pageFetcher(item.Link)
+				mu.Lock()
+				if htmlErr != nil {
+					err = errors.Join(err, htmlErr)
+				}
+				infos = append(infos, RSSInfo{
+					Title: item.Title,
+					Link:  item.Link,
+					Page:  page,
+				})
+				mu.Unlock()
+			}
+		}(item)
 	}
+
+	wg.Wait()
+
 	if err != nil {
-		err = errors.Join(err, fmt.Errorf("failed to fetch HTML for some URLs: %w", err))
+		err = fmt.Errorf("failed to fetch HTML for some URLs: %w", err)
 	}
+
 	return infos, err
 }
 

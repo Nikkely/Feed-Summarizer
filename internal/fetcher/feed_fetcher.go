@@ -5,6 +5,7 @@
 package fetcher
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mmcdole/gofeed"
@@ -31,8 +32,7 @@ func FetchFeed(feedURL string) (*gofeed.Feed, error) {
 
 	feed, err := fp.ParseURL(feedURL)
 	if err != nil {
-		// TODO: 処理を止めずにエラーログを出力する
-		return nil, fmt.Errorf("failed to fetch RSS feed from URL %s: %w", feedURL, err)
+		err = errors.Join(err, fmt.Errorf("failed to fetch RSS feed from URL %s: %w", feedURL, err))
 	}
-	return feed, nil
+	return feed, err
 }
