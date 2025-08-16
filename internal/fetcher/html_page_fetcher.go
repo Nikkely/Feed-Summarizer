@@ -10,6 +10,17 @@ import (
 	"time"
 )
 
+const (
+	// httpClientTimeout defines the timeout duration for HTTP client requests.
+	httpClientTimeout = 60 * time.Second
+
+	// contextTimeout defines the timeout duration for the context used in FetchHTMLPages.
+	contextTimeout = 3 * time.Minute
+
+	// maxConcurrentGoroutines defines the maximum number of concurrent goroutines allowed in FetchHTMLPages.
+	maxConcurrentGoroutines = 10
+)
+
 // HTMLPageFetcher defines a function type for fetching HTML content of a given URL.
 // Parameters:
 //   - string: The URL of the page to fetch.
@@ -28,7 +39,7 @@ type HTMLPageFetcher func(string) (string, error)
 //   - error: An error if the request or reading the response fails.
 func FetchHTML(url string) (html string, err error) {
 	c := &http.Client{
-		Timeout: 60 * time.Second,
+		Timeout: httpClientTimeout,
 	}
 	resp, err := c.Get(url)
 	if err != nil {
@@ -64,14 +75,14 @@ func FetchHTML(url string) (html string, err error) {
 //   - map[string]string: A map where the keys are URLs and the values are their corresponding HTML content.
 //   - error: An aggregated error if any of the URLs cannot be processed.
 func FetchHTMLPages(urls []string, fetcher HTMLPageFetcher) (map[string]string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var err error
 	result := make(map[string]string)
-	semaphore := make(chan struct{}, 10)
+	semaphore := make(chan struct{}, maxConcurrentGoroutines)
 
 	for _, url := range urls {
 		wg.Add(1)
