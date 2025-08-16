@@ -163,7 +163,7 @@ func TestSummarize_ErrorHandling(t *testing.T) {
 	}
 
 	s := NewSummarizer(mockClient, mockFeedFetcher, mockPageFetcher)
-	s.LoadPromptBuilder("../../templates/system_prompt.txt", "../../templates/user_prompt.tmpl")
+	_ = s.LoadPromptBuilder("../../templates/system_prompt.txt", "../../templates/user_prompt.tmpl")
 	result, err := s.Summarize("http://example.com/rss")
 	assert.NoError(t, err, "Summarize returned an unexpected error")
 	assert.Equal(t, "mock summary", result, "Summarize result mismatch")
