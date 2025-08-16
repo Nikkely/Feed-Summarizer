@@ -2,6 +2,7 @@ package summarize
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -20,7 +21,6 @@ func (m *MockGenAIClient) Send(prompt string) (string, error) {
 	}
 	return "mock summary", nil
 }
-
 
 func TestSummarize_Updated(t *testing.T) {
 	mockClient := &MockGenAIClient{}
@@ -99,4 +99,72 @@ func TestSummarize_ErrorWhenPromptBuilderNotInitialized(t *testing.T) {
 	_, err := s.Summarize("http://example.com/rss")
 	assert.Error(t, err, "Expected an error when PromptBuilder is not initialized")
 	assert.Contains(t, err.Error(), "prompt builder is not initialized", "Error message mismatch")
+}
+
+func TestNewRSSInfo_ErrorHandling(t *testing.T) {
+	mockFeed := &gofeed.Feed{
+		Items: []*gofeed.Item{
+			{Title: "Item 1", Link: "http://example.com/item1"},
+			{Title: "Item 2", Link: "http://example.com/item2"},
+		},
+	}
+
+	mockPageFetcher := func(url string) (string, error) {
+		if url == "http://example.com/item1" {
+			return "<html>Page 1</html>", nil
+		}
+		return "", fmt.Errorf("failed to fetch page for URL: %s", url)
+	}
+
+	infos, err := NewRSSInfo(mockFeed, mockPageFetcher)
+	assert.Error(t, err, "Expected an error but got nil")
+	assert.Len(t, infos, 2, "Expected 2 RSSInfo items")
+	assert.Equal(t, "Item 1", infos[0].Title, "RSSInfo title mismatch")
+	assert.Equal(t, "http://example.com/item1", infos[0].Link, "RSSInfo link mismatch")
+	assert.Contains(t, infos[0].Page, "Page 1", "RSSInfo page content mismatch")
+	assert.Empty(t, infos[1].Page, "Expected empty page content for failed fetch")
+}
+
+func TestNewRSSInfo_WithPageFetcher(t *testing.T) {
+	mockFeed := &gofeed.Feed{
+		Items: []*gofeed.Item{
+			{Title: "Item 1", Link: "http://example.com/item1"},
+			{Title: "Item 2", Link: "http://example.com/item2"},
+		},
+	}
+
+	mockPageFetcher := func(url string) (string, error) {
+		if url == "http://example.com/item1" {
+			return "<html>Page 1</html>", nil
+		}
+		return "", fmt.Errorf("failed to fetch page for URL: %s", url)
+	}
+
+	infos, err := NewRSSInfo(mockFeed, mockPageFetcher)
+	assert.Error(t, err, "Expected an error but got nil")
+	assert.Len(t, infos, 2, "Expected 2 RSSInfo items")
+	assert.Equal(t, "Item 1", infos[0].Title, "RSSInfo title mismatch")
+	assert.Equal(t, "http://example.com/item1", infos[0].Link, "RSSInfo link mismatch")
+	assert.Contains(t, infos[0].Page, "Page 1", "RSSInfo page content mismatch")
+	assert.Empty(t, infos[1].Page, "Expected empty page content for failed fetch")
+}
+
+func TestSummarize_ErrorHandling(t *testing.T) {
+	mockClient := &MockGenAIClient{}
+	mockFeedFetcher := func(_ string) (*gofeed.Feed, error) {
+		return &gofeed.Feed{
+			Items: []*gofeed.Item{
+				{Title: "Test Item", Link: "http://example.com/test"},
+			},
+		}, nil
+	}
+	mockPageFetcher := func(_ string) (string, error) {
+		return "", fmt.Errorf("failed to fetch page")
+	}
+
+	s := NewSummarizer(mockClient, mockFeedFetcher, mockPageFetcher)
+	_ = s.LoadPromptBuilder("../../templates/system_prompt.txt", "../../templates/user_prompt.tmpl")
+	result, err := s.Summarize("http://example.com/rss")
+	assert.NoError(t, err, "Summarize returned an unexpected error")
+	assert.Equal(t, "mock summary", result, "Summarize result mismatch")
 }
