@@ -64,22 +64,22 @@ func TestExtractAndFormat(t *testing.T) {
 		{
 			name:       "single object",
 			input:      "{\"heading\": \"Test\", \"summary\": \"Summary\"}",
-			tmplString: "{{range .items}}[{{.heading}}: {{.summary}}]{{end}}",
-			expected:   "[Test: Summary]",
+			tmplString: `{"heading": "{{.heading}}", "summary": "{{.summary}}"}`,
+			expected:   "[{\"heading\":\"Test\",\"summary\":\"Summary\"}]",
 			wantErr:    false,
 		},
 		{
 			name:       "array of objects",
 			input:      "[{\"heading\": \"H1\", \"summary\": \"S1\"}, {\"heading\": \"H2\", \"summary\": \"S2\"}]",
-			tmplString: "{{range .items}}[{{.heading}}: {{.summary}}]{{end}}",
-			expected:   "[H1: S1][H2: S2]",
+			tmplString: `{"heading": "{{.heading}}", "summary": "{{.summary}}"}`,
+			expected:   `[{"heading":"H1","summary":"S1"},{"heading":"H2","summary":"S2"}]`,
 			wantErr:    false,
 		},
 		{
 			name:       "multiple separate objects",
 			input:      "{\"heading\": \"H1\", \"summary\": \"S1\"} {\"heading\": \"H2\", \"summary\": \"S2\"}",
-			tmplString: "{{range .items}}[{{.heading}}: {{.summary}}]{{end}}",
-			expected:   "[H1: S1][H2: S2]",
+			tmplString: `{"heading": "{{.heading}}", "summary": "{{.summary}}"}`,
+			expected:   `[{"heading":"H1","summary":"S1"},{"heading":"H2","summary":"S2"}]`,
 			wantErr:    false,
 		},
 		{
@@ -91,8 +91,8 @@ func TestExtractAndFormat(t *testing.T) {
 		{
 			name:       "nested objects",
 			input:      "[{\"heading\": \"H1\", \"details\": {\"author\": \"A1\"}}, {\"heading\": \"H2\", \"details\": {\"author\": \"A2\"}}]",
-			tmplString: "{{range .items}}[{{.heading}} by {{.details.author}}]{{end}}",
-			expected:   "[H1 by A1][H2 by A2]",
+			tmplString: `{"author": "{{.heading}} by {{.details.author}}"}`,
+			expected:   "[{\"author\":\"H1 by A1\"},{\"author\":\"H2 by A2\"}]",
 			wantErr:    false,
 		},
 	}
