@@ -14,6 +14,7 @@ var FetchCmd = &cobra.Command{
 	Short: "Fetch RSS feed as JSON",
 	Long: `Fetches an RSS feed from the specified URL and outputs it in JSON format.
 The command supports standard RSS 2.0, RSS 1.0, and Atom formats.`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: fetch,
 }
 
@@ -32,17 +33,22 @@ func init() {
 //   - error: An error if the fetch operation fails, nil otherwise
 func fetch(cmd *cobra.Command, args []string) error {
 	fp := gofeed.NewParser()
-
-	feed, err := fp.ParseURL(url)
-	if err != nil {
-		return fmt.Errorf("failed to fetch feed from URL %s: %w", url, err)
+	if len(args) < 1 {
+		return fmt.Errorf("missing URL argument")
 	}
 
-	buf, err := json.Marshal(feed)
-	if err != nil {
-		return fmt.Errorf("failed to marshal feed to JSON: %w", err)
-	}
+	for _, url := range args {
+		feed, err := fp.ParseURL(url)
+		if err != nil {
+			return fmt.Errorf("failed to fetch feed from URL %s: %w", url, err)
+		}
 
-	fmt.Println(string(buf))
+		buf, err := json.Marshal(feed)
+		if err != nil {
+			return fmt.Errorf("failed to marshal feed to JSON: %w", err)
+		}
+
+		fmt.Println(string(buf))
+	}
 	return nil
 }

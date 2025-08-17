@@ -8,7 +8,6 @@ import (
 )
 
 var (
-	url                string
 	genAPIKind         string
 	systemPromptPath   string
 	userPromptPath     string
@@ -18,10 +17,15 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "summarize",
+	Use:   "summarize [url]",
 	Short: "Summarize RSS feed content using AI",
 	Long: `A CLI tool that fetches RSS feed content and generates summaries using AI.
-It supports custom prompts and output formatting.`,
+It supports custom prompts and output formatting.
+
+Example:
+  summarize https://example.com/feed.xml
+  summarize https://example.com/feed.xml --format`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: summarize,
 }
 
@@ -34,12 +38,9 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&url, "url", "u", "", "RSS feed URL to summarize")
 	rootCmd.Flags().StringVar(&genAPIKind, "gen-api-kind", "gemini", "Generative AI API type (currently only 'gemini' is supported)")
 	rootCmd.Flags().StringVar(&systemPromptPath, "system-prompt", "", "Path to custom system prompt template file")
 	rootCmd.Flags().StringVar(&userPromptPath, "user-prompt", "", "Path to custom user prompt template file")
 	rootCmd.Flags().BoolVar(&formatOutput, "format", false, "Format output as JSON with template")
 	rootCmd.Flags().StringVar(&outputTemplatePath, "output", "", "Custom output template path (only used when -format is true)")
-
-	rootCmd.MarkFlagRequired("url")
 }

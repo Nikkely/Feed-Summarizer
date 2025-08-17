@@ -24,31 +24,34 @@ func summarize(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	summary, err := summarizer.Summarize(url)
-	if err != nil {
-		return fmt.Errorf("failed to summarize feed: %w", err)
-	}
-
-	if !formatOutput {
-		fmt.Println(summary)
-		return nil
-	}
-
-	var outputTemplate *template.Template
-	if outputTemplatePath != "" {
-		outputTemplate, err = template.ParseFiles(outputTemplatePath)
+	for _, url := range args {
+		summary, err := summarizer.Summarize(url)
 		if err != nil {
-			return fmt.Errorf("failed to read output template from %s: %w", outputTemplatePath, err)
+			return fmt.Errorf("failed to summarize feed: %w", err)
 		}
-	} else {
-		outputTemplate = jsonify.OutputTemplate
+
+		if !formatOutput {
+			fmt.Println(summary)
+			return nil
+		}
+
+		var outputTemplate *template.Template
+		if outputTemplatePath != "" {
+			outputTemplate, err = template.ParseFiles(outputTemplatePath)
+			if err != nil {
+				return fmt.Errorf("failed to read output template from %s: %w", outputTemplatePath, err)
+			}
+		} else {
+			outputTemplate = jsonify.OutputTemplate
+		}
+
+		formattedResult, err := jsonify.ExtractAndFormat(summary, outputTemplate)
+		if err != nil {
+			return fmt.Errorf("failed to format summary: %w", err)
+		}
+
+		fmt.Println(formattedResult)
 	}
 
-	formattedResult, err := jsonify.ExtractAndFormat(summary, outputTemplate)
-	if err != nil {
-		return fmt.Errorf("failed to format summary: %w", err)
-	}
-
-	fmt.Println(formattedResult)
 	return nil
 }
