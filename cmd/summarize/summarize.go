@@ -12,26 +12,37 @@ import (
 func main() {
 	urlArg := flag.String("url", "https://example.com/feed", "rss feed url")
 	genApiKindArg := flag.String("gen-api-kind", "gemini", "kind of generative API to use")
-	systemPromptArg := flag.String("system-prompt", "templates/system_prompt.txt", "path to system prompt template")
-	userPromptArg := flag.String("user-prompt", "templates/user_prompt.tmpl", "path to user prompt template")
+	systemPromptPathArg := flag.String("system-prompt", "", "path to system prompt template")
+	userPromptPathArg := flag.String("user-prompt", "", "path to user prompt template")
+	outputTemplatePathArg := flag.String("output", "", "this flag should only be used when the prompt specifies JSON formatting.")
 	flag.Parse()
 
-	var sumClient genAi.GenAIClient
-	switch *genApiKindArg {
-	case "gemini":
-		sumClient = genAi.NewGeminiClient("gemini-2.5-flash-lite")
-	default:
+	sumClient := genAi.NewGenAIClient(*genApiKindArg)
+	if sumClient == nil {
 		log.Fatal("Unsupported API")
 	}
 
 	summarizer := sum.NewSummarizer(sumClient, fetcher.FetchFeed, fetcher.FetchHTML)
-	if err := summarizer.LoadPromptBuilder(*systemPromptArg, *userPromptArg); err != nil {
-		log.Fatal("Failed to load prompt builder:", err)
+	if systemPromptPathArg != nil && *systemPromptPathArg != "" && userPromptPathArg != nil && *userPromptPathArg != "" {
+		if err := summarizer.LoadPromptBuilder(*systemPromptPathArg, *userPromptPathArg); err != nil {
+			log.Fatal("Failed to load prompt builder:", err)
+		}
 	}
 	summary, err := summarizer.Summarize(*urlArg)
 	if err != nil {
-		log.Fatal("Failed to summarize URLs:", err)
+		log.Fatal("Failed to summarize Feed:", err)
 	}
 
-	fmt.Println(summary)
+	if outputTemplatePathArg != nil && *outputTemplatePathArg != "" {
+		if err := summarizer.SetOutputTemplate(*outputTemplatePathArg); err != nil {
+			fmt.Println(summary)
+			log.Fatal("Failed to format summary:", err)
+		}
+	}
+	formattedSummary, err := summarizer.FormatOutput(summary)
+	if err != nil {
+		fmt.Println(summary)
+		log.Fatal("Failed to format summary:", err)
+	}
+	fmt.Println(formattedSummary)
 }

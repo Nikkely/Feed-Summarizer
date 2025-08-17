@@ -13,3 +13,12 @@ type GenAIClient interface {
 	//   - error: An error if the summarization fails.
 	Send(text string) (string, error)
 }
+
+func NewGenAIClient(kind string) GenAIClient {
+	switch kind {
+	case "gemini":
+		return NewGeminiClient("gemini-2.5-flash-lite")
+	default:
+		return nil
+	}
+}
