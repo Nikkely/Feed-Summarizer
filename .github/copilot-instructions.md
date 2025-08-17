@@ -7,6 +7,7 @@
 - Always handle errors explicitly unless clearly safe to ignore.
 - Prefer dependency injection over global variables.
 - **All chat responses must be in Japanese**, even if code comments or examples contain English.
+- **After making any changes or implementing new code, always run the tests and ensure all of them pass before finalizing.**
 
 ---
 
@@ -18,3 +19,9 @@
   ```go
   // CalculateTax returns the tax amount for the given income.
   ```
+
+---
+
+# Testing
+#- Do not run `go test` directly.
+- When asked to run tests, always use the VS Code task labeled unit test.

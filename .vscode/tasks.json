@@ -1,0 +1,13 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "unit test",
+      "type": "shell",
+      "command": "make",
+      "args": ["-f", "scripts/Makefile", "unit_test"],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
