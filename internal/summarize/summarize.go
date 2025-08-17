@@ -1,3 +1,12 @@
+// Package summarize provides functionality for summarizing RSS feed content.
+//
+// This package offers the following key features:
+//   - Fetching and parsing RSS feeds
+//   - Retrieving HTML content for feed articles
+//   - Generating summaries using AI-powered content analysis
+//   - Customizable template-based output formatting
+//
+// Use the Summarizer to generate summaries from RSS feed URLs.
 package summarize
 
 import (
@@ -85,6 +94,15 @@ func NewSummarizer(client genAi.GenAIClient, feedFetcher fetcher.FeedFetcher, pa
 	}
 }
 
+// SetOutputTemplate sets the template file used for formatting the summary output.
+// The template receives the AI response as JSON data and formats it according to
+// the specified template.
+//
+// Parameters:
+//   - templatePath: Path to the template file.
+//
+// Returns:
+//   - error: An error if reading or parsing the template fails.
 func (s *Summarizer) SetOutputTemplate(templatePath string) error {
 	outputTemplate, err := template.ParseFiles(templatePath)
 	if err != nil {
@@ -147,6 +165,16 @@ func (s *Summarizer) Summarize(feedURL string) (string, error) {
 	return s.client.Send(s.promptBuilder.Build())
 }
 
+// FormatOutput formats the summarized content using the configured output template.
+// The input is expected to be a JSON string that will be parsed and formatted according
+// to the template.
+//
+// Parameters:
+//   - input: A JSON string containing the summary data to format.
+//
+// Returns:
+//   - string: The formatted output according to the template.
+//   - error: An error if JSON parsing or template execution fails.
 func (s *Summarizer) FormatOutput(input string) (string, error) {
 	var jsonOutput map[string]interface{}
 	if err := json.Unmarshal([]byte(input), &jsonOutput); err != nil {

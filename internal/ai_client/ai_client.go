@@ -14,6 +14,12 @@ type GenAIClient interface {
 	Send(text string) (string, error)
 }
 
+// NewGenAIClient creates a new AI client of the specified type.
+// Parameters:
+//   - kind: Type of AI client to create. Currently only "gemini" is supported.
+//
+// Returns:
+//   - GenAIClient: A new instance of the AI client, or nil if the type is not supported.
 func NewGenAIClient(kind string) GenAIClient {
 	switch kind {
 	case "gemini":

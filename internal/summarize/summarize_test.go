@@ -104,12 +104,12 @@ func TestLoadPromptBuilder(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	sysPromptPath := filepath.Join(tmpDir, "system_prompt.txt")
-	if err := os.WriteFile(sysPromptPath, []byte(testSystemPrompt), 0644); err != nil {
+	if err := os.WriteFile(sysPromptPath, []byte(testSystemPrompt), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
 	userPromptPath := filepath.Join(tmpDir, "user_prompt.tmpl")
-	if err := os.WriteFile(userPromptPath, []byte(testUserPromptTemplate), 0644); err != nil {
+	if err := os.WriteFile(userPromptPath, []byte(testUserPromptTemplate), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

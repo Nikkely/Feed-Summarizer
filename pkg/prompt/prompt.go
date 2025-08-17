@@ -1,3 +1,6 @@
+// Package prompt provides utilities for building and managing prompts for AI models.
+// It includes the PromptBuilder type which helps construct prompts by combining
+// system prompts with user input using templates.
 package prompt
 
 import (
