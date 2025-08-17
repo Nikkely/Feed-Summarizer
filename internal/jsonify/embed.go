@@ -8,6 +8,8 @@ import (
 //go:embed output.json.tmpl
 var outputTmplStr string
 
+// OutputTemplate is a pre-defined template for formatting JSON data.
+// It is loaded from output.json.tmpl and defines the structure of JSON objects.
 var OutputTemplate *template.Template
 
 func init() {

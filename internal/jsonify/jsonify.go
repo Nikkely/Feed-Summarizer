@@ -86,12 +86,12 @@ func ExtractAndFormat(input string, tmpl *template.Template) (string, error) {
 			continue
 		}
 
-		var newJsonObj any
-		if unmarshalErr := json.Unmarshal(buf.Bytes(), &newJsonObj); unmarshalErr != nil {
+		var newJSONObj any
+		if unmarshalErr := json.Unmarshal(buf.Bytes(), &newJSONObj); unmarshalErr != nil {
 			err = errors.Join(err, fmt.Errorf("failed to parse JSON object from template output: %w", unmarshalErr))
 			continue
 		}
-		jsonArr = append(jsonArr, newJsonObj)
+		jsonArr = append(jsonArr, newJSONObj)
 	}
 	if err != nil {
 		return "", fmt.Errorf("failed to create JSON string: %w", err)

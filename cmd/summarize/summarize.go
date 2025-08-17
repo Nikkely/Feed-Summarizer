@@ -14,7 +14,7 @@ import (
 func main() {
 	// Set up command-line flags
 	urlArg := flag.String("url", "https://example.com/feed", "RSS feed URL to summarize")
-	genApiKindArg := flag.String("gen-api-kind", "gemini", "Generative AI API type (currently only 'gemini' is supported)")
+	genAPIKindArg := flag.String("gen-api-kind", "gemini", "Generative AI API type (currently only 'gemini' is supported)")
 	systemPromptPathArg := flag.String("system-prompt", "", "Path to custom system prompt template file")
 	userPromptPathArg := flag.String("user-prompt", "", "Path to custom user prompt template file")
 	formatArg := flag.Bool("format", false, "Format output as JSON with template")
@@ -26,7 +26,7 @@ func main() {
 		log.Fatal("Please provide a valid RSS feed URL")
 	}
 
-	sumClient := genAi.NewGenAIClient(*genApiKindArg)
+	sumClient := genAi.NewGenAIClient(*genAPIKindArg)
 	if sumClient == nil {
 		log.Fatal("Unsupported API")
 	}
