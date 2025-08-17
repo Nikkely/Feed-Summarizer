@@ -6,18 +6,27 @@ import (
 	"log"
 	genAi "rss-summarizer/internal/ai_client"
 	"rss-summarizer/internal/fetcher"
+	"rss-summarizer/internal/jsonify"
 	sum "rss-summarizer/internal/summarize"
+	"text/template"
 )
 
 func main() {
-	urlArg := flag.String("url", "https://example.com/feed", "rss feed url")
-	genApiKindArg := flag.String("gen-api-kind", "gemini", "kind of generative API to use")
-	systemPromptPathArg := flag.String("system-prompt", "", "path to system prompt template")
-	userPromptPathArg := flag.String("user-prompt", "", "path to user prompt template")
-	outputTemplatePathArg := flag.String("output", "", "this flag should only be used when the prompt specifies JSON formatting.")
+	// Set up command-line flags
+	urlArg := flag.String("url", "https://example.com/feed", "RSS feed URL to summarize")
+	genAPIKindArg := flag.String("gen-api-kind", "gemini", "Generative AI API type (currently only 'gemini' is supported)")
+	systemPromptPathArg := flag.String("system-prompt", "", "Path to custom system prompt template file")
+	userPromptPathArg := flag.String("user-prompt", "", "Path to custom user prompt template file")
+	formatArg := flag.Bool("format", false, "Format output as JSON with template")
+	outputTemplatePathArg := flag.String("output", "", "Custom output template path (only used when -format is true)")
 	flag.Parse()
 
-	sumClient := genAi.NewGenAIClient(*genApiKindArg)
+	// Validate command-line arguments
+	if *urlArg == "" || *urlArg == "https://example.com/feed" {
+		log.Fatal("Please provide a valid RSS feed URL")
+	}
+
+	sumClient := genAi.NewGenAIClient(*genAPIKindArg)
 	if sumClient == nil {
 		log.Fatal("Unsupported API")
 	}
@@ -33,16 +42,30 @@ func main() {
 		log.Fatal("Failed to summarize Feed:", err)
 	}
 
-	if outputTemplatePathArg != nil && *outputTemplatePathArg != "" {
-		if err := summarizer.SetOutputTemplate(*outputTemplatePathArg); err != nil {
-			fmt.Println(summary)
-			log.Fatal("Failed to format summary:", err)
-		}
-	}
-	formattedSummary, err := summarizer.FormatOutput(summary)
-	if err != nil {
+	if !*formatArg {
+		// Output raw summary when formatting is not requested
 		fmt.Println(summary)
-		log.Fatal("Failed to format summary:", err)
+		return
 	}
-	fmt.Println(formattedSummary)
+
+	// Set up output template for formatting
+	var outputTemplate *template.Template
+	if *outputTemplatePathArg != "" {
+		// Load custom template if specified
+		outputTemplate, err = template.ParseFiles(*outputTemplatePathArg)
+		if err != nil {
+			log.Fatalf("Failed to read output template from %s: %v", *outputTemplatePathArg, err)
+		}
+	} else {
+		// Use default template from jsonify package
+		outputTemplate = jsonify.OutputTemplate
+	}
+
+	// Format the summary using the template
+	formattedResult, err := jsonify.ExtractAndFormat(summary, outputTemplate)
+	if err != nil {
+		log.Fatalf("Failed to format summary: %v", err)
+	}
+
+	fmt.Println(formattedResult)
 }

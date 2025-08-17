@@ -37,11 +37,6 @@ var testUserPromptTemplate = `タイトル：{{.Title}}, URL:{{.Link}}
   {{ . }}
 {{ end }}`
 
-var testOutputTemplate = `{
-  "heading": "{{ .heading }}",
-  "summary": "{{ .summary }}"
-}`
-
 func TestSummarize_Updated(t *testing.T) {
 	mockClient := &MockGenAIClient{}
 	mockFeedFetcher := func(_ string) (*gofeed.Feed, error) {
@@ -59,7 +54,6 @@ func TestSummarize_Updated(t *testing.T) {
 
 	// テンプレートの直接設定
 	s.promptBuilder = prompt.NewPromptBuilder(testSystemPrompt, template.Must(template.New("user").Parse(testUserPromptTemplate)))
-	s.outputTmpl = template.Must(template.New("output").Parse(testOutputTemplate))
 
 	result, err := s.Summarize("http://example.com/rss")
 	assert.NoError(t, err, "Summarize returned an unexpected error")
