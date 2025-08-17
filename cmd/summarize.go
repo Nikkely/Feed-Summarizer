@@ -50,7 +50,10 @@ func summarize(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to format summary: %w", err)
 		}
 
-		fmt.Println(formattedResult)
+		switch outputDest {
+		default:
+			fmt.Println(formattedResult)
+		}
 	}
 
 	return nil

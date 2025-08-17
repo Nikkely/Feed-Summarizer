@@ -11,7 +11,7 @@ import (
 // FetchCmd represents the fetch command that retrieves RSS feeds as JSON
 var FetchCmd = &cobra.Command{
 	Use:   "fetch",
-	Short: "Fetch RSS feed as JSON",
+	Short: "Only Fetch RSS feed as JSON",
 	Long: `Fetches an RSS feed from the specified URL and outputs it in JSON format.
 The command supports standard RSS 2.0, RSS 1.0, and Atom formats.`,
 	Args: cobra.MinimumNArgs(1),

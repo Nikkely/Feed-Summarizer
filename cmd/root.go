@@ -13,6 +13,7 @@ var (
 	userPromptPath     string
 	formatOutput       bool
 	outputTemplatePath string
+	outputDest         string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,5 +43,6 @@ func init() {
 	rootCmd.Flags().StringVar(&systemPromptPath, "system-prompt", "", "Path to custom system prompt template file")
 	rootCmd.Flags().StringVar(&userPromptPath, "user-prompt", "", "Path to custom user prompt template file")
 	rootCmd.Flags().BoolVar(&formatOutput, "format", false, "Format output as JSON with template")
-	rootCmd.Flags().StringVar(&outputTemplatePath, "output", "", "Custom output template path (only used when -format is true)")
+	rootCmd.Flags().StringVar(&outputTemplatePath, "output-template", "", "Custom output template path (only used when -format is true)")
+	rootCmd.Flags().StringVar(&outputDest, "output-dest", "standard", "Output destination (e.g., 'standard', 'file', 'datastore')")
 }
