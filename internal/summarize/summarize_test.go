@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"rss-summarizer/internal/fetcher"
-	"rss-summarizer/pkg/prompt"
+	"feed-summarizer/internal/fetcher"
+	"feed-summarizer/pkg/prompt"
 	"testing"
 	"text/template"
 

@@ -1,4 +1,4 @@
-module rss-summarizer
+module feed-summarizer
 
 go 1.25
 

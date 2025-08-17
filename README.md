@@ -1,6 +1,6 @@
-# RSS Summarizer
+# Feed Summarizer
 
-RSS Summarizer is a Go-based application designed to fetch RSS feeds and generate summaries. This project leverages AI to efficiently summarize information.
+Feed Summarizer is a Go-based application designed to fetch RSS feeds and generate summaries. This project leverages AI to efficiently summarize information.
 
 ## Key Features
 - Fetching RSS feeds

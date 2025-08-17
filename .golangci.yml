@@ -20,7 +20,7 @@ linters-settings:
   gofmt:
     simplify: true
   goimports:
-    local-prefixes: RSS-Summaries
+    local-prefixes: Feed-Summaries
   gocritic:
     enabled-tags:
       - diagnostic
