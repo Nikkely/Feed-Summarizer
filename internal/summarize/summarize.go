@@ -1,6 +1,17 @@
+// Package summarize provides functionality for summarizing RSS feed content.
+//
+// This package offers the following key features:
+//   - Fetching and parsing RSS feeds
+//   - Retrieving HTML content for feed articles
+//   - Generating summaries using AI-powered content analysis
+//   - Customizable template-based output formatting
+//
+// Use the Summarizer to generate summaries from RSS feed URLs.
 package summarize
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -61,6 +72,7 @@ type Summarizer struct {
 	feedFetcher   fetcher.FeedFetcher
 	pageFetcher   fetcher.HTMLPageFetcher
 	promptBuilder *prompt.PromptBuilder
+	outputTmpl    *template.Template // optional
 }
 
 // NewSummarizer initializes a new Summarizer instance.
@@ -72,26 +84,32 @@ type Summarizer struct {
 // Returns:
 //   - *Summarizer: A new Summarizer instance.
 func NewSummarizer(client genAi.GenAIClient, feedFetcher fetcher.FeedFetcher, pageFetcher fetcher.HTMLPageFetcher) *Summarizer {
+	promptBuilder := prompt.NewPromptBuilder(systemPrompt, userPromptTemplate)
 	return &Summarizer{
-		client:      client,
-		feedFetcher: feedFetcher,
-		pageFetcher: pageFetcher,
+		client:        client,
+		feedFetcher:   feedFetcher,
+		pageFetcher:   pageFetcher,
+		promptBuilder: promptBuilder,
+		outputTmpl:    outputTemplate,
 	}
 }
 
-// txtFileLoader reads the content of a text file and returns it as a string.
+// SetOutputTemplate sets the template file used for formatting the summary output.
+// The template receives the AI response as JSON data and formats it according to
+// the specified template.
+//
 // Parameters:
-//   - filePath: A string representing the path to the text file.
+//   - templatePath: Path to the template file.
 //
 // Returns:
-//   - string: The content of the file as a string.
-//   - error: An error if the file cannot be read.
-func txtFileLoader(filePath string) (string, error) {
-	content, err := os.ReadFile(filePath)
+//   - error: An error if reading or parsing the template fails.
+func (s *Summarizer) SetOutputTemplate(templatePath string) error {
+	outputTemplate, err := template.ParseFiles(templatePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read file %s: %w", filePath, err)
+		return fmt.Errorf("failed to parse output template: %w", err)
 	}
-	return string(content), nil
+	s.outputTmpl = outputTemplate
+	return nil
 }
 
 // LoadPromptBuilder initializes the prompt builder with system and user prompts.
@@ -145,4 +163,43 @@ func (s *Summarizer) Summarize(feedURL string) (string, error) {
 	}
 
 	return s.client.Send(s.promptBuilder.Build())
+}
+
+// FormatOutput formats the summarized content using the configured output template.
+// The input is expected to be a JSON string that will be parsed and formatted according
+// to the template.
+//
+// Parameters:
+//   - input: A JSON string containing the summary data to format.
+//
+// Returns:
+//   - string: The formatted output according to the template.
+//   - error: An error if JSON parsing or template execution fails.
+func (s *Summarizer) FormatOutput(input string) (string, error) {
+	var jsonOutput map[string]interface{}
+	if err := json.Unmarshal([]byte(input), &jsonOutput); err != nil {
+		return "", fmt.Errorf("input is not valid JSON: %w", err)
+	}
+
+	var outputBuffer bytes.Buffer
+	if err := s.outputTmpl.Execute(&outputBuffer, jsonOutput); err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	return outputBuffer.String(), nil
+}
+
+// txtFileLoader reads the content of a text file and returns it as a string.
+// Parameters:
+//   - filePath: A string representing the path to the text file.
+//
+// Returns:
+//   - string: The content of the file as a string.
+//   - error: An error if the file cannot be read.
+func txtFileLoader(filePath string) (string, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+	return string(content), nil
 }
