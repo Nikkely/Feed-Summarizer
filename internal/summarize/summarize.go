@@ -10,8 +10,6 @@
 package summarize
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -67,12 +65,17 @@ func NewRSSInfo(feed *gofeed.Feed, pageFetcher fetcher.HTMLPageFetcher) (infos [
 
 // Summarizer is responsible for summarizing RSS feed content using a GenAIClient.
 // It fetches RSS feeds, retrieves HTML content, and generates summaries based on prompts.
+//
+// The Summarizer workflow:
+// 1. Fetches RSS feed from the provided URL
+// 2. Extracts feed items and their HTML content
+// 3. Builds prompts using customizable templates
+// 4. Generates summaries using AI
 type Summarizer struct {
 	client        genAi.GenAIClient
 	feedFetcher   fetcher.FeedFetcher
 	pageFetcher   fetcher.HTMLPageFetcher
 	promptBuilder *prompt.PromptBuilder
-	outputTmpl    *template.Template // optional
 }
 
 // NewSummarizer initializes a new Summarizer instance.
@@ -90,26 +93,7 @@ func NewSummarizer(client genAi.GenAIClient, feedFetcher fetcher.FeedFetcher, pa
 		feedFetcher:   feedFetcher,
 		pageFetcher:   pageFetcher,
 		promptBuilder: promptBuilder,
-		outputTmpl:    outputTemplate,
 	}
-}
-
-// SetOutputTemplate sets the template file used for formatting the summary output.
-// The template receives the AI response as JSON data and formats it according to
-// the specified template.
-//
-// Parameters:
-//   - templatePath: Path to the template file.
-//
-// Returns:
-//   - error: An error if reading or parsing the template fails.
-func (s *Summarizer) SetOutputTemplate(templatePath string) error {
-	outputTemplate, err := template.ParseFiles(templatePath)
-	if err != nil {
-		return fmt.Errorf("failed to parse output template: %w", err)
-	}
-	s.outputTmpl = outputTemplate
-	return nil
 }
 
 // LoadPromptBuilder initializes the prompt builder with system and user prompts.
@@ -163,30 +147,6 @@ func (s *Summarizer) Summarize(feedURL string) (string, error) {
 	}
 
 	return s.client.Send(s.promptBuilder.Build())
-}
-
-// FormatOutput formats the summarized content using the configured output template.
-// The input is expected to be a JSON string that will be parsed and formatted according
-// to the template.
-//
-// Parameters:
-//   - input: A JSON string containing the summary data to format.
-//
-// Returns:
-//   - string: The formatted output according to the template.
-//   - error: An error if JSON parsing or template execution fails.
-func (s *Summarizer) FormatOutput(input string) (string, error) {
-	var jsonOutput map[string]interface{}
-	if err := json.Unmarshal([]byte(input), &jsonOutput); err != nil {
-		return "", fmt.Errorf("input is not valid JSON: %w", err)
-	}
-
-	var outputBuffer bytes.Buffer
-	if err := s.outputTmpl.Execute(&outputBuffer, jsonOutput); err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
-	}
-
-	return outputBuffer.String(), nil
 }
 
 // txtFileLoader reads the content of a text file and returns it as a string.
