@@ -12,9 +12,9 @@ import (
 )
 
 func summarize(cmd *cobra.Command, args []string) error {
-	sumClient := genAi.NewGenAIClient(genAPIKindArg)
+	sumClient := genAi.NewGenAIClient(genAPIKind)
 	if sumClient == nil {
-		return fmt.Errorf("unsupported API type: %s", genAPIKindArg)
+		return fmt.Errorf("unsupported API type: %s", genAPIKind)
 	}
 
 	summarizer := sum.NewSummarizer(sumClient, fetcher.FetchFeed, fetcher.FetchHTML)
@@ -24,7 +24,7 @@ func summarize(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	summary, err := summarizer.Summarize(urlArg)
+	summary, err := summarizer.Summarize(url)
 	if err != nil {
 		return fmt.Errorf("failed to summarize feed: %w", err)
 	}

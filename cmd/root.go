@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	// フラグ変数
-	urlArg             string
-	genAPIKindArg      string
+	url                string
+	genAPIKind         string
 	systemPromptPath   string
 	userPromptPath     string
 	formatOutput       bool
@@ -35,14 +34,12 @@ func Execute() {
 }
 
 func init() {
-	// フラグの定義
-	rootCmd.Flags().StringVarP(&urlArg, "url", "u", "", "RSS feed URL to summarize")
-	rootCmd.Flags().StringVar(&genAPIKindArg, "gen-api-kind", "gemini", "Generative AI API type (currently only 'gemini' is supported)")
+	rootCmd.Flags().StringVarP(&url, "url", "u", "", "RSS feed URL to summarize")
+	rootCmd.Flags().StringVar(&genAPIKind, "gen-api-kind", "gemini", "Generative AI API type (currently only 'gemini' is supported)")
 	rootCmd.Flags().StringVar(&systemPromptPath, "system-prompt", "", "Path to custom system prompt template file")
 	rootCmd.Flags().StringVar(&userPromptPath, "user-prompt", "", "Path to custom user prompt template file")
 	rootCmd.Flags().BoolVar(&formatOutput, "format", false, "Format output as JSON with template")
 	rootCmd.Flags().StringVar(&outputTemplatePath, "output", "", "Custom output template path (only used when -format is true)")
 
-	// 必須フラグの設定
 	rootCmd.MarkFlagRequired("url")
 }

@@ -8,11 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	// Command line flag for RSS feed URL
-	fetchURL string
-)
-
 // FetchCmd represents the fetch command that retrieves RSS feeds as JSON
 var FetchCmd = &cobra.Command{
 	Use:   "fetch",
@@ -25,10 +20,6 @@ The command supports standard RSS 2.0, RSS 1.0, and Atom formats.`,
 func init() {
 	// Register fetch command to root command
 	rootCmd.AddCommand(FetchCmd)
-
-	// Define command line flags
-	FetchCmd.Flags().StringVarP(&fetchURL, "url", "u", "", "URL of the RSS feed to fetch")
-	FetchCmd.MarkFlagRequired("url")
 }
 
 // fetch retrieves the RSS feed from the specified URL and outputs it as JSON.
@@ -42,9 +33,9 @@ func init() {
 func fetch(cmd *cobra.Command, args []string) error {
 	fp := gofeed.NewParser()
 
-	feed, err := fp.ParseURL(fetchURL)
+	feed, err := fp.ParseURL(url)
 	if err != nil {
-		return fmt.Errorf("failed to fetch RSS feed from URL %s: %w", fetchURL, err)
+		return fmt.Errorf("failed to fetch feed from URL %s: %w", url, err)
 	}
 
 	buf, err := json.Marshal(feed)
