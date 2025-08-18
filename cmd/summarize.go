@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func summarize(cmd *cobra.Command, args []string) error {
+func summarize(_ *cobra.Command, args []string) error {
 	sumClient := genAi.NewGenAIClient(genAPIKind)
 	if sumClient == nil {
 		return fmt.Errorf("unsupported API type: %s", genAPIKind)
@@ -50,10 +50,8 @@ func summarize(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to format summary: %w", err)
 		}
 
-		switch outputDest {
-		default:
-			fmt.Println(formattedResult)
-		}
+		// TODO: 出力指定可能に
+		fmt.Println(formattedResult)
 	}
 
 	return nil

@@ -1,3 +1,4 @@
+// Package cmd implements command-line interface for RSS feed summarizer.
 package cmd
 
 import (
@@ -7,16 +8,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Command line flags
 var (
-	genAPIKind         string
-	systemPromptPath   string
-	userPromptPath     string
-	formatOutput       bool
+	// genAPIKind specifies the generative AI API to use for summarization
+	genAPIKind string
+	// systemPromptPath is the path to custom system prompt template file
+	systemPromptPath string
+	// userPromptPath is the path to custom user prompt template file
+	userPromptPath string
+	// formatOutput determines whether to format the output as JSON
+	formatOutput bool
+	// outputTemplatePath is the path to custom output template file
 	outputTemplatePath string
-	outputDest         string
+	// outputDest specifies where to send the output (standard, file, or datastore)
+	outputDest string
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd is the base command for RSS feed summarizer CLI.
+// It accepts a URL argument and supports various flags for customization.
 var rootCmd = &cobra.Command{
 	Use:   "summarize [url]",
 	Short: "Summarize RSS feed content using AI",
@@ -44,5 +53,5 @@ func init() {
 	rootCmd.Flags().StringVar(&userPromptPath, "user-prompt", "", "Path to custom user prompt template file")
 	rootCmd.Flags().BoolVar(&formatOutput, "format", false, "Format output as JSON with template")
 	rootCmd.Flags().StringVar(&outputTemplatePath, "output-template", "", "Custom output template path (only used when -format is true)")
-	rootCmd.Flags().StringVar(&outputDest, "output-dest", "standard", "Output destination (e.g., 'standard', 'file', 'datastore')")
+	// rootCmd.Flags().StringVar(&outputDest, "output-dest", "standard", "Output destination (e.g., 'standard', 'file', 'datastore')")
 }

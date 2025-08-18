@@ -26,12 +26,12 @@ func init() {
 // fetch retrieves the RSS feed from the specified URL and outputs it as JSON.
 // It handles the core functionality of the fetch command.
 // Parameters:
-//   - cmd: The Cobra command being run
+//   - _: The Cobra command being run
 //   - args: Command line arguments after the command name
 //
 // Returns:
 //   - error: An error if the fetch operation fails, nil otherwise
-func fetch(cmd *cobra.Command, args []string) error {
+func fetch(_ *cobra.Command, args []string) error {
 	fp := gofeed.NewParser()
 	if len(args) < 1 {
 		return fmt.Errorf("missing URL argument")
