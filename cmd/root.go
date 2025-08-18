@@ -20,6 +20,8 @@ var (
 	formatOutput bool
 	// outputTemplatePath is the path to custom output template file
 	outputTemplatePath string
+	// outputDest specifies where to send the output (standard, file, or datastore)
+	outputDest string
 )
 
 // rootCmd is the base command for RSS feed summarizer CLI.
@@ -51,4 +53,5 @@ func init() {
 	rootCmd.Flags().StringVar(&userPromptPath, "user-prompt", "", "Path to custom user prompt template file")
 	rootCmd.Flags().BoolVar(&formatOutput, "format", false, "Format output as JSON with template")
 	rootCmd.Flags().StringVar(&outputTemplatePath, "output-template", "", "Custom output template path (only used when -format is true)")
+	rootCmd.Flags().StringVar(&outputDest, "output-dest", "standard", "Output destination (e.g., 'standard', 'file', 'datastore')")
 }
