@@ -61,14 +61,14 @@ func extractJSONArray(input string) ([]string, error) {
 //   - tmpl: The template to apply to the resulting JSON array
 //
 // Returns:
-//   - string: A single formatted string containing the JSON array
+//   - any: Formatted JSON array
 //   - error: An error if extraction, parsing, or template execution fails
-func ExtractAndFormat(input string, tmpl *template.Template) (string, error) {
+func ExtractAndFormat(input string, tmpl *template.Template) ([]any, error) {
 	var err error
 	// Extract JSON objects
 	jsonObjs, err := extractJSONArray(input)
 	if err != nil {
-		return "", fmt.Errorf("failed to extract JSON: %w", err)
+		return nil, fmt.Errorf("failed to extract JSON: %w", err)
 	}
 
 	// Parse each JSON object
@@ -94,12 +94,8 @@ func ExtractAndFormat(input string, tmpl *template.Template) (string, error) {
 		jsonArr = append(jsonArr, newJSONObj)
 	}
 	if err != nil {
-		return "", fmt.Errorf("failed to create JSON string: %w", err)
+		return nil, fmt.Errorf("failed to create JSON string: %w", err)
 	}
 
-	ret, err := json.Marshal(jsonArr)
-	if err != nil {
-		return "", fmt.Errorf("failed to create JSON string: %w", err)
-	}
-	return string(ret), nil
+	return jsonArr, nil
 }
