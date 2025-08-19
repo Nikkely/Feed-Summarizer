@@ -2,7 +2,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -20,9 +19,13 @@ var (
 	formatOutput bool
 	// outputTemplatePath is the path to custom output template file
 	outputTemplatePath string
+	// outputDest specifies where to send the output (standard, file, or datastore)
+	outputDest string
+
+	gcpProjectID string
 )
 
-// rootCmd is the base command for RSS feed summarizer CLI.
+// rootCmd is the base command for feed summarizer CLI.
 // It accepts a URL argument and supports various flags for customization.
 var rootCmd = &cobra.Command{
 	Use:   "summarize [url]",
@@ -40,7 +43,6 @@ Example:
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
 		os.Exit(1)
 	}
 }
@@ -51,4 +53,6 @@ func init() {
 	rootCmd.Flags().StringVar(&userPromptPath, "user-prompt", "", "Path to custom user prompt template file")
 	rootCmd.Flags().BoolVar(&formatOutput, "format", false, "Format output as JSON with template")
 	rootCmd.Flags().StringVar(&outputTemplatePath, "output-template", "", "Custom output template path (only used when -format is true)")
+	rootCmd.Flags().StringVar(&outputDest, "output-dest", "standard", "Output destination (e.g., 'standard', 'file', 'datastore')")
+	rootCmd.Flags().StringVar(&gcpProjectID, "gcp-project-id", "", "GCP project ID (required for datastore)")
 }

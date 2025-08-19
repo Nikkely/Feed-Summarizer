@@ -58,42 +58,52 @@ func TestExtractAndFormat(t *testing.T) {
 		name       string
 		input      string
 		tmplString string
-		expected   string
+		expected   []any
 		wantErr    bool
 	}{
 		{
 			name:       "single object",
 			input:      "{\"heading\": \"Test\", \"summary\": \"Summary\"}",
 			tmplString: `{"heading": "{{.heading}}", "summary": "{{.summary}}"}`,
-			expected:   "[{\"heading\":\"Test\",\"summary\":\"Summary\"}]",
+			expected:   []any{map[string]any{"heading": "Test", "summary": "Summary"}},
 			wantErr:    false,
 		},
 		{
 			name:       "array of objects",
 			input:      "[{\"heading\": \"H1\", \"summary\": \"S1\"}, {\"heading\": \"H2\", \"summary\": \"S2\"}]",
 			tmplString: `{"heading": "{{.heading}}", "summary": "{{.summary}}"}`,
-			expected:   `[{"heading":"H1","summary":"S1"},{"heading":"H2","summary":"S2"}]`,
-			wantErr:    false,
+			expected: []any{
+				map[string]any{"heading": "H1", "summary": "S1"},
+				map[string]any{"heading": "H2", "summary": "S2"},
+			},
+			wantErr: false,
 		},
 		{
 			name:       "multiple separate objects",
 			input:      "{\"heading\": \"H1\", \"summary\": \"S1\"} {\"heading\": \"H2\", \"summary\": \"S2\"}",
 			tmplString: `{"heading": "{{.heading}}", "summary": "{{.summary}}"}`,
-			expected:   `[{"heading":"H1","summary":"S1"},{"heading":"H2","summary":"S2"}]`,
-			wantErr:    false,
+			expected: []any{
+				map[string]any{"heading": "H1", "summary": "S1"},
+				map[string]any{"heading": "H2", "summary": "S2"},
+			},
+			wantErr: false,
 		},
 		{
 			name:       "no JSON structure",
 			input:      "Text with no JSON",
 			tmplString: "{{.heading}}",
+			expected:   nil,
 			wantErr:    true,
 		},
 		{
 			name:       "nested objects",
 			input:      "[{\"heading\": \"H1\", \"details\": {\"author\": \"A1\"}}, {\"heading\": \"H2\", \"details\": {\"author\": \"A2\"}}]",
 			tmplString: `{"author": "{{.heading}} by {{.details.author}}"}`,
-			expected:   "[{\"author\":\"H1 by A1\"},{\"author\":\"H2 by A2\"}]",
-			wantErr:    false,
+			expected: []any{
+				map[string]any{"author": "H1 by A1"},
+				map[string]any{"author": "H2 by A2"},
+			},
+			wantErr: false,
 		},
 	}
 

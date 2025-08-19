@@ -23,5 +23,5 @@
 ---
 
 # Testing
-#- Do not run `go test` directly.
-- When asked to run tests, always use the VS Code task labeled unit test.
+- Do not run `go test` directly. Watch 
+- When run tests, always use the VS Code task labeled `unit test`.

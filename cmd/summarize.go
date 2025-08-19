@@ -1,10 +1,12 @@
 package cmd
 
 import (
-	genAi "feed-summarizer/internal/ai_client"
-	"feed-summarizer/internal/fetcher"
-	"feed-summarizer/internal/jsonify"
-	sum "feed-summarizer/internal/summarize"
+	"context"
+	genAi "feed-summarizer/ai_client"
+	db "feed-summarizer/database"
+	"feed-summarizer/fetcher"
+	"feed-summarizer/jsonify"
+	sum "feed-summarizer/summarize"
 	"fmt"
 	"text/template"
 
@@ -45,13 +47,28 @@ func summarize(_ *cobra.Command, args []string) error {
 			outputTemplate = jsonify.OutputTemplate
 		}
 
-		formattedResult, err := jsonify.ExtractAndFormat(summary, outputTemplate)
+		formattedResults, err := jsonify.ExtractAndFormat(summary, outputTemplate)
 		if err != nil {
 			return fmt.Errorf("failed to format summary: %w", err)
 		}
 
-		// TODO: 出力指定可能に
-		fmt.Println(formattedResult)
+		switch outputDest {
+		case "datastore":
+			ctx := context.Background()
+			client, err := db.NewDatastoreClient(ctx, gcpProjectID)
+			if err != nil {
+				return fmt.Errorf("failed to create datastore client: %w", err)
+			}
+			keys, err := db.GenerateUUIDs(len(formattedResults))
+			if err != nil {
+				return fmt.Errorf("failed to generate keys: %w", err)
+			}
+			if err := client.PutMulti(ctx, "summaries", keys, formattedResults); err != nil {
+				return fmt.Errorf("failed to save summary to datastore: %w", err)
+			}
+		default:
+			fmt.Println(formattedResults)
+		}
 	}
 
 	return nil

@@ -2,14 +2,14 @@ package summarize
 
 import (
 	"errors"
+	"feed-summarizer/fetcher"
+	"feed-summarizer/prompt"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"feed-summarizer/internal/fetcher"
-	"feed-summarizer/pkg/prompt"
 	"testing"
 	"text/template"
 
