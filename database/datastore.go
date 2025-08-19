@@ -95,10 +95,10 @@ func GenerateUUID() (string, error) {
 // Returns:
 //   - []string: A slice of generated UUIDs
 //   - error: An error if any UUID generation fails
-func GenerateUUIDs(len int) ([]string, error) {
+func GenerateUUIDs(num int) ([]string, error) {
 	var err error
-	uuids := make([]string, len)
-	for i := 0; i < len; i++ {
+	uuids := make([]string, num)
+	for i := 0; i < num; i++ {
 		uuid, uuidErr := GenerateUUID()
 		if uuidErr != nil {
 			err = errors.Join(err, uuidErr)
