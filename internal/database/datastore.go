@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"cloud.google.com/go/datastore"
 	"github.com/google/uuid"
@@ -56,6 +57,7 @@ func (d *Datastore) PutMulti(ctx context.Context, kind string, keys []string, en
 		switch v := entities[i].(type) {
 		case map[string]any:
 			dsEntities[i] = dynamicEntity(v)
+			dsEntities[i].addMetaInfo()
 		default:
 			return fmt.Errorf("unsupported entity type at index %d: %T", i, v)
 		}
@@ -146,4 +148,10 @@ func (d *dynamicEntity) Load(props []datastore.Property) error {
 	}
 	*d = m
 	return nil
+}
+
+// addMetaInfo adds metadata information to the entity.
+// Currently, it adds an updated_time field with the current UTC timestamp.
+func (d *dynamicEntity) addMetaInfo() {
+	(*d)["updated_time"] = time.Now().UTC()
 }
