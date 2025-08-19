@@ -15,9 +15,9 @@ import (
 	"os"
 	"text/template"
 
-	genAi "feed-summarizer/internal/ai_client"
-	"feed-summarizer/internal/fetcher"
-	"feed-summarizer/pkg/prompt"
+	genAi "feed-summarizer/ai_client"
+	"feed-summarizer/fetcher"
+	"feed-summarizer/prompt"
 
 	"github.com/mmcdole/gofeed"
 )

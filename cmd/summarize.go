@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"context"
-	genAi "feed-summarizer/internal/ai_client"
-	db "feed-summarizer/internal/database"
-	"feed-summarizer/internal/fetcher"
-	"feed-summarizer/internal/jsonify"
-	sum "feed-summarizer/internal/summarize"
+	genAi "feed-summarizer/ai_client"
+	db "feed-summarizer/database"
+	"feed-summarizer/fetcher"
+	"feed-summarizer/jsonify"
+	sum "feed-summarizer/summarize"
 	"fmt"
 	"text/template"
 
